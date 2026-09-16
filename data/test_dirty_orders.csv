@@ -1,0 +1,18 @@
+order_id,customer_id,phone,items,order_date,total_amount
+ORD-1001,CUST-001,771234567,"[{""item_id"": ""ITM-1"", ""name"": ""Laptop Stand"", ""qty"": 1, ""price"": 45.0}]",2024-03-15T10:30:00Z,45.00
+ORD-1002,CUST-002,+967 771-234-568,"[{""item_id"": ""ITM-2"", ""name"": ""Wireless Mouse"", ""qty"": 2, ""price"": 15.0}]",2023-11-20 14:15:00,30.00
+ORD-1003,CUST-003,00967 ٧٣١٢٣٤٥٦٩,"[{""item_id"": ""ITM-3"", ""name"": ""Mechanical Keyboard"", ""qty"": 1, ""price"": 8500}]",2024-01-10T09:00:00,"٨,٥٠٠ YER"
+ORD-1004,CUST-004,0781234560,"[{""item_id"": ""ITM-4"", ""name"": ""USB Cable"", ""qty"": 3, ""price"": 5.0}]",2024-05-01T12:00:00Z,15.00 ريال
+ORD-1005,CUST-005,۹۶۷۷۰۱۲۳۴۵۶۱,"[{""item_id"": ""ITM-5"", ""name"": ""Monitor"", ""qty"": 1, ""price"": 120.0}]",2024-06-12T08:30:00Z,120.00
+ORD-1006,CUST-006,+967-71-2345672,"[{""item_id"": ""ITM-6"", ""name"": ""Webcam"", ""qty"": 1, ""price"": 40.0}]",2024-07-04T16:20:00Z,40.00 YER
+ORD-2001,CUST-007,+967 791 234 567,"[{""item_id"": ""ITM-7"", ""name"": ""Speaker"", ""qty"": 1, ""price"": 25.0}]",2024-02-14T11:00:00Z,25.00
+ORD-2002,CUST-008,77123,"[{""item_id"": ""ITM-8"", ""name"": ""Headphones"", ""qty"": 1, ""price"": 35.0}]",2024-02-15T11:00:00Z,35.00
+ORD-2003,,771234567,"[{""item_id"": ""ITM-9"", ""name"": ""Desk Lamp"", ""qty"": 1, ""price"": 18.0}]",2024-02-16T11:00:00Z,18.00
+ORD-2004,   ,771234567,"[{""item_id"": ""ITM-10"", ""name"": ""Notebook"", ""qty"": 5, ""price"": 2.0}]",2024-02-17T11:00:00Z,10.00
+ORD-2005,CUST-011,771234567,[],2024-02-18T11:00:00Z,50.00
+ORD-2006,CUST-012,771234567,"{""not_a_list"": true}",2024-02-19T11:00:00Z,50.00
+ORD-2007,CUST-013,771234567,[{item_id: unquoted_val,2024-02-20T11:00:00Z,50.00
+ORD-2008,CUST-014,771234567,"[{""item_id"": ""ITM-14"", ""name"": ""Antique Clock"", ""qty"": 1, ""price"": 200.0}]",1890-05-12T10:00:00Z,200.00
+ORD-2009,CUST-015,771234567,"[{""item_id"": ""ITM-15"", ""name"": ""Futuristic Drone"", ""qty"": 1, ""price"": 500.0}]",2099-12-31T23:59:59Z,500.00
+ORD-2010,CUST-016,771234567,"[{""item_id"": ""ITM-16"", ""name"": ""Coffee Mug"", ""qty"": 2, ""price"": 7.0}]",not-a-valid-date-string,14.00
+ORD-2011,CUST-017,771234567,"[{""item_id"": ""ITM-17"", ""name"": ""Refund Voucher"", ""qty"": 1, ""price"": -50.0}]",2024-03-01T15:00:00Z,-50.00 YER

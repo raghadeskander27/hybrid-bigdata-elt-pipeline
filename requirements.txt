@@ -1,0 +1,4 @@
+pyspark>=3.5.0
+pymongo>=4.6.0
+python-dateutil>=2.8.2
+pytest>=7.0.0
