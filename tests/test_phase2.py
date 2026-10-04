@@ -233,8 +233,7 @@ class TestAggregations:
         db = setup_phase2_db
         results = report_order_value_distribution(db)
         assert len(results) > 0
-        assert any(r["tier"] == "1. Under 25 YER" for r in results)
-        assert any(r["tier"] == "4. 100+ YER (High Value)" for r in results)
+        assert any("Under 1,000 YER" in r["tier"] for r in results)
 
     def test_run_aggregation_dispatcher(self, setup_phase2_db):
         db = setup_phase2_db

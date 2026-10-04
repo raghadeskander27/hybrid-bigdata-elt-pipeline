@@ -183,8 +183,12 @@ def report_sales_by_operator(db: Database) -> List[Dict[str, Any]]:
 
 def report_order_value_distribution(db: Database) -> List[Dict[str, Any]]:
     """
-    Report 5: Order Value Distribution (Price Tier Stratification)
-    Buckets order amounts into distinct spending tiers.
+    Report 5: Order Value Distribution (Realistic YER Price Tier Stratification)
+    Buckets order amounts into realistic Yemeni Rial (YER) spending tiers:
+    - 1. Under 1,000 YER
+    - 2. 1,000 - 5,000 YER
+    - 3. 5,000 - 10,000 YER
+    - 4. 10,000+ YER (High Value)
     """
     col = db[VALIDATED_COLLECTION]
     pipeline = [
@@ -193,11 +197,11 @@ def report_order_value_distribution(db: Database) -> List[Dict[str, Any]]:
                 "tier": {
                     "$switch": {
                         "branches": [
-                            {"case": {"$lt": ["$total_amount", 25.0]}, "then": "1. Under 25 YER"},
-                            {"case": {"$and": [{"$gte": ["$total_amount", 25.0]}, {"$lt": ["$total_amount", 50.0]}]}, "then": "2. 25 - 50 YER"},
-                            {"case": {"$and": [{"$gte": ["$total_amount", 50.0]}, {"$lt": ["$total_amount", 100.0]}]}, "then": "3. 50 - 100 YER"},
+                            {"case": {"$lt": ["$total_amount", 1000.0]}, "then": "1. Under 1,000 YER"},
+                            {"case": {"$and": [{"$gte": ["$total_amount", 1000.0]}, {"$lt": ["$total_amount", 5000.0]}]}, "then": "2. 1,000 - 5,000 YER"},
+                            {"case": {"$and": [{"$gte": ["$total_amount", 5000.0]}, {"$lt": ["$total_amount", 10000.0]}]}, "then": "3. 5,000 - 10,000 YER"},
                         ],
-                        "default": "4. 100+ YER (High Value)",
+                        "default": "4. 10,000+ YER (High Value)",
                     }
                 },
                 "total_amount": 1,
