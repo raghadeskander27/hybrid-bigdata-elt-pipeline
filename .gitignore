@@ -1,0 +1,20 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest cache
+.pytest_cache/
+
+# Local Environment & Secrets
+.env
+venv/
+.venv/
+env/
+
+# MongoDB local data if in repo
+mongo_data/
+
+# OS specific files
+.DS_Store
+Thumbs.db

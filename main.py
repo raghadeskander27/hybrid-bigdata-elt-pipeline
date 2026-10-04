@@ -1,5 +1,7 @@
 """
-Main execution CLI entrypoint for the Hybrid Big Data ELT Pipeline.
+Main execution CLI entrypoint for the Hybrid Big Data ELT Pipeline & Phase 2 Services.
+Supports pipeline ingestion, explain benchmarks, aggregations, materialized views,
+scheduled job triggers, and launching the unified FastAPI server.
 """
 import argparse
 import json
@@ -9,15 +11,28 @@ from pathlib import Path
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from config.settings import DEFAULT_DIRTY_DATASET_PATH, DB_NAME, MONGO_URI, RESULTS_FILE
+from config.settings import (
+    DEFAULT_DIRTY_DATASET_PATH,
+    DB_NAME,
+    MONGO_URI,
+    RESULTS_FILE,
+    API_HOST,
+    API_PORT,
+)
 from src.create_small_sample import create_dirty_sample_csv
 from src.elt_pipeline import run_pipeline
+from src.mongo_setup import get_database, init_db
+from src.explain_runner import run_explain_comparison, print_explain_report
+from src.aggregations import AVAILABLE_AGGREGATIONS, run_aggregation
+from src.materialized_views import refresh_all_materialized_views, get_materialized_view_data
+from src.scheduler import REGISTERED_JOBS, run_job_manually
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Hybrid Big Data ELT Pipeline (Python Batch + PySpark + MongoDB)"
+        description="Hybrid Big Data ELT Pipeline & Phase 2 Platform"
     )
+    # Pipeline Ingestion arguments
     parser.add_argument(
         "--file",
         type=str,
@@ -47,6 +62,46 @@ def parse_args():
         "--generate-sample",
         action="store_true",
         help="Generate synthetic dirty sample data before executing.",
+    )
+
+    # Phase 2 Action Flags
+    parser.add_argument(
+        "--serve-api",
+        action="store_true",
+        help="Start the unified FastAPI server with Swagger docs on /docs.",
+    )
+    parser.add_argument(
+        "--api-host",
+        type=str,
+        default=API_HOST,
+        help=f"FastAPI host (default: {API_HOST}).",
+    )
+    parser.add_argument(
+        "--api-port",
+        type=int,
+        default=API_PORT,
+        help=f"FastAPI port (default: {API_PORT}).",
+    )
+    parser.add_argument(
+        "--run-explain",
+        action="store_true",
+        help="Run explain('executionStats') benchmark on 3 queries BEFORE and AFTER indexes.",
+    )
+    parser.add_argument(
+        "--run-aggregations",
+        action="store_true",
+        help="Execute all 5 analytical aggregation reports and print outputs.",
+    )
+    parser.add_argument(
+        "--refresh-mv",
+        action="store_true",
+        help="Trigger incremental refresh of Materialized Views.",
+    )
+    parser.add_argument(
+        "--run-job",
+        type=str,
+        choices=list(REGISTERED_JOBS.keys()),
+        help="Manually trigger a registered background job by name.",
     )
     return parser.parse_args()
 
@@ -83,10 +138,74 @@ def print_summary_table(metrics: dict):
     print("=" * 70 + "\n")
 
 
+def execute_explain_action(db_name: str):
+    print("\n--- Running Explain Analysis (Before vs After Indexes) ---")
+    db = get_database(db_name=db_name)
+    report = run_explain_comparison(db)
+    print_explain_report(report)
+
+
+def execute_aggregations_action(db_name: str):
+    print("\n--- Executing 5 Aggregation Reports ---")
+    db = get_database(db_name=db_name)
+    for name, meta in AVAILABLE_AGGREGATIONS.items():
+        print(f"\n[REPORT] {name.upper()}: {meta['description']}")
+        print("-" * 70)
+        results = run_aggregation(db, name)
+        print(json.dumps(results, indent=2, ensure_ascii=False))
+
+
+def execute_mv_action(db_name: str):
+    print("\n--- Refreshing Materialized Views (Incremental) ---")
+    db = get_database(db_name=db_name)
+    result = refresh_all_materialized_views(db)
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+def execute_job_action(job_name: str, db_name: str):
+    print(f"\n--- Manually Triggering Job: '{job_name}' ---")
+    db = get_database(db_name=db_name)
+    result = run_job_manually(job_name, db=db)
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+def start_api_server(host: str, port: int):
+    import uvicorn
+    print(f"\nStarting FastAPI server on http://{host}:{port} ...")
+    print(f"Swagger Documentation available at: http://{host}:{port}/docs\n")
+    uvicorn.run("src.api:app", host=host, port=port, reload=False)
+
+
 def main():
     args = parse_args()
     print_banner()
 
+    # 1. Action: Serve API
+    if args.serve_api:
+        start_api_server(args.api_host, args.api_port)
+        return
+
+    # 2. Action: Run Explain Comparison
+    if args.run_explain:
+        execute_explain_action(args.db_name)
+        return
+
+    # 3. Action: Run Aggregations
+    if args.run_aggregations:
+        execute_aggregations_action(args.db_name)
+        return
+
+    # 4. Action: Refresh Materialized Views
+    if args.refresh_mv:
+        execute_mv_action(args.db_name)
+        return
+
+    # 5. Action: Run Job Manually
+    if args.run_job:
+        execute_job_action(args.run_job, args.db_name)
+        return
+
+    # Default Action: Standard ELT Pipeline Ingestion
     input_path = Path(args.file)
 
     if args.generate_sample or not input_path.exists():
