@@ -41,11 +41,14 @@ flowchart TD
     API --> Ingestion_Layer
     API --> Analytics_Layer
     API --> MV_Automation
+```
 
 ### Core Invariants & Guarantees
 1. **ELT Design Pattern:** 100% of raw events ingested into `orders_raw` without pre-filtering.
 2. **Consistency Invariant:**
-   $$\text{run\_raw\_count} = \text{valid\_count} + \text{corrected\_count} + \text{quarantine\_count}$$
+   ```text
+   run_raw_count = valid_count + corrected_count + quarantine_count
+   ```
 3. **Strict Idempotency:** Validated records write exclusively through MongoDB `UpdateOne({"order_id": ...}, {"$set": ...}, upsert=True)` governed by a unique index on `order_id`. Re-running identical datasets yields `inserted_count == 0` and `unchanged_count == total`.
 4. **Incremental Materialized Views:** `daily_sales_summary` and `top_products_summary` process only newly validated delta records using watermarks and atomic `$inc` updates, completely eliminating full collection rebuilds.
 
@@ -167,9 +170,9 @@ python main.py --run-explain
 
 | Query | Target Index | BEFORE Index (Stage) | AFTER Index (Stage) | Docs Examined | Keys Examined | Performance Impact |
 | :--- | :--- | :--- | :--- | :---: | :---: | :--- |
-| **Customer Orders** | `idx_compound_customer_order_date` | `SORT -> FETCH -> IXSCAN` | `LIMIT -> FETCH -> IXSCAN` | 1 | 1 | Completely eliminates in-memory `SORT` stage by leveraging index sort order |
-| **High Value Orders** | `idx_total_amount_desc` | `SORT -> COLLSCAN` | `LIMIT -> FETCH -> IXSCAN` | 6 → 5 | 0 → 5 | Replaces full collection scan with B-Tree index traversal |
-| **Product Search** | `idx_items_item_id` | `LIMIT -> COLLSCAN` | `LIMIT -> FETCH -> IXSCAN` | 6 → 1 | 0 → 1 | Multikey index targets exact array element, dropping docs examined to 1 |
+| **Customer Orders** | `idx_compound_customer_order_date` | `SORT → FETCH → IXSCAN` | `LIMIT → FETCH → IXSCAN` | 1 → 1 | 1 → 1 | Completely eliminates in-memory `SORT` stage by leveraging index sort order |
+| **High Value Orders** | `idx_total_amount_desc` | `SORT → COLLSCAN` | `LIMIT → FETCH → IXSCAN` | 6 → 5 | 0 → 5 | Replaces full collection scan with B-Tree index traversal |
+| **Product Search** | `idx_items_item_id` | `LIMIT → COLLSCAN` | `LIMIT → FETCH → IXSCAN` | 6 → 1 | 0 → 1 | Multikey index targets exact array element, dropping docs examined to 1 |
 
 ---
 
