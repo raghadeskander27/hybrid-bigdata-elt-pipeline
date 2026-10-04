@@ -1,5 +1,5 @@
 # Hybrid Big Data ELT Pipeline & Analytics Platform (Phase 1 & Phase 2)
-## متطلبات المشروع النهائي - Big Data Final Project
+
 
 An enterprise-grade, idempotent ELT data pipeline and analytical platform engineered with **Python Batch**, **Apache Spark (PySpark)**, **MongoDB**, and **FastAPI**.
 
@@ -9,37 +9,38 @@ An enterprise-grade, idempotent ELT data pipeline and analytical platform engine
 
 ```mermaid
 flowchart TD
-    subgraph Ingestion Layer [Phase 1: Hybrid ELT Ingestion]
-        CSV[Input CSV] --> Router[File Router: 200 MB Threshold]
-        Router -->|<= 200 MB| Batch[Python Batch Loader]
-        Router -->|> 200 MB| Spark[PySpark Loader]
-        Batch --> Raw[(MongoDB: orders_raw)]
+    subgraph Ingestion_Layer ["Phase 1: Hybrid ELT Ingestion"]
+        CSV["Input CSV"] --> Router["File Router: 200 MB Threshold"]
+        Router -->|<= 200 MB| Batch["Python Batch Loader"]
+        Router -->|> 200 MB| Spark["PySpark Loader"]
+        Batch --> Raw[("MongoDB: orders_raw")]
         Spark --> Raw
-        Raw --> Quality[Quality & Validation Engine]
-        Quality -->|Valid & Cleaned| Val[(MongoDB: orders_validated)]
-        Quality -->|Flagged| Quar[(MongoDB: orders_quarantine)]
+        Raw --> Quality["Quality & Validation Engine"]
+        Quality -->|Valid & Cleaned| Val[("MongoDB: orders_validated")]
+        Quality -->|Flagged| Quar[("MongoDB: orders_quarantine")]
     end
 
-    subgraph Analytics Layer [Phase 2: Queries, Indexes & Reports]
-        Val --> Q[5 Practical Queries]
-        Val --> IDX[Compound & Specialized Indexes]
-        Val --> AGG[5 Aggregation Reports]
+    subgraph Analytics_Layer ["Phase 2: Queries, Indexes & Reports"]
+        Val --> Q["5 Practical Queries"]
+        Val --> IDX["Compound & Specialized Indexes"]
+        Val --> AGG["5 Aggregation Reports"]
     end
 
-    subgraph Materialized Views & Automation [Phase 2: Views & Scheduler]
-        Val -.Incremental Delta.-> MV[Incremental Materialized Views]
-        MV --> DSales[(daily_sales_summary)]
-        MV --> TProd[(top_products_summary)]
-        Sched[APScheduler Engine] --> MV
-        Sched --> JLogs[(MongoDB: job_logs)]
+    subgraph MV_Automation ["Phase 2: Views & Scheduler"]
+        Val -.Incremental Delta.-> MV["Incremental Materialized Views"]
+        MV --> DSales[("daily_sales_summary")]
+        MV --> TProd[("top_products_summary")]
+        Sched["APScheduler Engine"] --> MV
+        Sched --> JLogs[("MongoDB: job_logs")]
     end
 
-    subgraph Unified Evaluation API [Phase 2: FastAPI Service]
-        API[FastAPI Service /docs] --> Ingestion Layer
-        API --> Analytics Layer
-        API --> Materialized Views & Automation
+    subgraph FastAPI_Service ["Phase 2: FastAPI Service"]
+        API["FastAPI App (/docs)"]
     end
-```
+
+    API --> Ingestion_Layer
+    API --> Analytics_Layer
+    API --> MV_Automation
 
 ### Core Invariants & Guarantees
 1. **ELT Design Pattern:** 100% of raw events ingested into `orders_raw` without pre-filtering.
@@ -167,8 +168,8 @@ python main.py --run-explain
 | Query | Target Index | BEFORE Index (Stage) | AFTER Index (Stage) | Docs Examined | Keys Examined | Performance Impact |
 | :--- | :--- | :--- | :--- | :---: | :---: | :--- |
 | **Customer Orders** | `idx_compound_customer_order_date` | `SORT -> FETCH -> IXSCAN` | `LIMIT -> FETCH -> IXSCAN` | 1 | 1 | Completely eliminates in-memory `SORT` stage by leveraging index sort order |
-| **High Value Orders** | `idx_total_amount_desc` | `SORT -> COLLSCAN` | `LIMIT -> FETCH -> IXSCAN` | 6 $\rightarrow$ 5 | 0 $\rightarrow$ 5 | Replaces full collection scan with B-Tree index traversal |
-| **Product Search** | `idx_items_item_id` | `LIMIT -> COLLSCAN` | `LIMIT -> FETCH -> IXSCAN` | 6 $\rightarrow$ 1 | 0 $\rightarrow$ 1 | Multikey index targets exact array element, dropping docs examined to 1 |
+| **High Value Orders** | `idx_total_amount_desc` | `SORT -> COLLSCAN` | `LIMIT -> FETCH -> IXSCAN` | 6 → 5 | 0 → 5 | Replaces full collection scan with B-Tree index traversal |
+| **Product Search** | `idx_items_item_id` | `LIMIT -> COLLSCAN` | `LIMIT -> FETCH -> IXSCAN` | 6 → 1 | 0 → 1 | Multikey index targets exact array element, dropping docs examined to 1 |
 
 ---
 
@@ -184,7 +185,7 @@ Or via API: `GET /aggregations/{name}`
 2. **`top_customers`:** Groups by `customer_id`, calculates lifetime `total_spent`, `order_count`, `avg_order_value`, and `last_order_date`.
 3. **`sales_by_period`:** Groups orders by day (`$substr: ["$order_date", 0, 10]`), computing daily sales and volume trends.
 4. **`sales_by_operator`:** Evaluates the 2-digit prefix of normalized Yemeni phones (`77`, `78`, `73`, `71`, `70`), breaking down revenue and market share by carrier (Yemen Mobile, YOU, Sabafon, Y-Telecom).
-5. **`order_value_distribution`:** Buckets order amounts into price tiers (`<25`, `25-50`, `50-100`, `100+ YER`).
+5. **`order_value_distribution`:** Buckets order amounts into realistic YER price tiers (`< 1,000`, `1,000 - 5,000`, `5,000 - 10,000`, `10,000+ YER`).
 
 ---
 
